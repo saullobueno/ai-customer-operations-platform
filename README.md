@@ -52,6 +52,11 @@ npm run format:check     # prettier --check .
 npm run test             # vitest run
 npm run test:coverage    # vitest run --coverage
 npm run build             # next build
+
+npm run auth:generate    # regenera src/server/db/schema/auth.ts a partir da config do Better Auth
+npm run db:generate      # gera migration SQL a partir do schema Drizzle
+npm run db:push          # aplica o schema direto no banco (dev)
+npm run db:studio        # abre o Drizzle Studio
 ```
 
 Testes que precisam de um banco relacional rodam contra
@@ -63,9 +68,9 @@ Testes que precisam de um banco relacional rodam contra
 O projeto foi construído em fases sequenciais, cada uma terminando em um
 commit com typecheck, lint, testes e build passando:
 
-1. **Scaffold e tooling** — Next.js, lint, formatter, testes, CI básico.
-2. **Fundação técnica** — schema multi-tenant (organizations, users, teams,
-   RBAC), autenticação, design system base.
+1. **Scaffold e tooling** ✅ — Next.js, lint, formatter, testes, CI básico.
+2. **Fundação técnica** ✅ — schema multi-tenant (organization, user, team,
+   member/RBAC via Better Auth), autenticação, design system base.
 3. **Fluxo vertical de tickets** — inbox, tickets, comentários, anexos,
    SLA, tags, notas internas, atualizações em tempo real, audit log.
 4. **Camada de IA** — classificação de tickets, sumarização, sentimento,

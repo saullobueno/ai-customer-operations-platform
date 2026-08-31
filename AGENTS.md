@@ -67,10 +67,39 @@ O projeto é construído em fases sequenciais, cada uma terminando em commit
 com a suíte de qualidade verde:
 
 1. Scaffold e tooling (concluída)
-2. Fundação técnica — schema multi-tenant, RBAC, auth, design system
+2. Fundação técnica — schema multi-tenant, RBAC, auth, design system (concluída)
 3. Fluxo vertical de tickets — inbox, comentários, SLA, realtime, audit log
 4. Camada de IA — classificação, sumarização, RAG, agente
 5. Polimento — filas, billing, e-mail, analytics, CI completo
+
+## Camadas (`src/`)
+
+```
+src/app/                 # rotas (App Router) — composição de página, sem regra de negócio
+src/app/api/              # route handlers (ex.: catch-all do Better Auth)
+src/components/ui/        # design system: primitivos sem estado de negócio (Button, Input, Card…)
+src/components/(feature)/ # componentes de feature, compostos a partir de src/components/ui
+src/server/db/schema/     # tabelas Drizzle. auth.ts é gerado (não editar à mão — ver abaixo)
+src/server/db/client.ts   # instância singleton do Drizzle (postgres-js)
+src/server/db/test-utils.ts  # createTestDb() com PGlite, para testes
+src/server/auth/          # config do Better Auth (config.ts) + RBAC (permissions.ts)
+src/lib/                  # utilitários puros sem I/O (cn(), env.ts)
+```
+
+Regra de dependência: `app` pode importar de `components` e `server`;
+`components/ui` não importa de `server` nem de `components/(feature)`;
+`server` nunca importa de `app` ou `components`. Lógica de negócio (ex.:
+"criar ticket e disparar classificação") entra em `src/server/services/`
+quando a fase 3 começar — ainda não existe.
+
+### Schema de auth é gerado, não editado
+
+`src/server/db/schema/auth.ts` é produzido por
+`npm run auth:generate` a partir de `src/server/auth/config.ts` (plugins do
+Better Auth). Mudou a config de plugins (ex.: novo campo, novo plugin)?
+Rode `npm run auth:generate` de novo — não edite `auth.ts` manualmente, a
+próxima geração sobrescreve. Depois de gerar, rode `npm run db:generate`
+para criar a migration SQL correspondente em `drizzle/`.
 
 ## Convenções
 
