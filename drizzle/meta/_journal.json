@@ -8,6 +8,13 @@
       "when": 1788219296154,
       "tag": "0000_init_auth_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788219930703,
+      "tag": "0001_tickets_domain",
+      "breakpoints": true
     }
   ]
 }
