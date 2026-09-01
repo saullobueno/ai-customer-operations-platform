@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike } from "drizzle-orm";
 import {
   customer,
   notification,
@@ -228,11 +228,12 @@ export async function addTagToTicket(
 
 export async function listInboxTickets(
   db: AppDatabase,
-  filters: { organizationId: string; status?: TicketStatus; assigneeId?: string },
+  filters: { organizationId: string; status?: TicketStatus; assigneeId?: string; search?: string },
 ) {
   const conditions = [eq(ticket.organizationId, filters.organizationId)];
   if (filters.status) conditions.push(eq(ticket.status, filters.status));
   if (filters.assigneeId) conditions.push(eq(ticket.assigneeId, filters.assigneeId));
+  if (filters.search) conditions.push(ilike(ticket.subject, `%${filters.search}%`));
 
   return db.query.ticket.findMany({
     where: and(...conditions),

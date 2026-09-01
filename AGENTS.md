@@ -47,6 +47,7 @@ npm run test             # vitest run
 npm run test:watch       # vitest (watch mode)
 npm run test:coverage    # vitest run --coverage
 npm run build             # next build
+npm run worker            # processa a fila ai-triage (BullMQ) — rodar em paralelo ao `dev` para triagem automática
 ```
 
 Rode `typecheck`, `lint`, `format:check`, `test` e `build` antes de
@@ -62,7 +63,10 @@ desenvolvimento. Testes automatizados que precisam de Postgres usam
 [0003](docs/decisions/0003-pglite-for-tests.md). Não assuma que Docker está
 disponível ao escrever testes; se uma feature só pode ser validada contra
 Postgres/Redis reais, isso fica para o CI (que sobe os serviços de verdade),
-não para `npm test` local.
+não para `npm test` local. Padrão para esse caso:
+`describe.skipIf(!await isServiceAvailable())` no topo do arquivo de teste
+(ver `src/server/queue/redis-integration.test.ts`) — pula localmente sem
+quebrar, roda de verdade no CI.
 
 ## Estrutura de fases
 
@@ -90,6 +94,7 @@ src/server/services/      # lógica de negócio pura (recebe `db` por parâmetro
 src/server/actions/       # Server Actions ("use server") — ponte fina entre forms e services, com checagem de RBAC
 src/server/realtime/      # publisher/subscriber de eventos em processo (ver ADR 0006)
 src/server/ai/            # client do provedor de IA (client.ts) + prompts/schemas (triage.ts) — sem `db`
+src/server/queue/         # BullMQ: enqueueAiTriage (produtor) + workers/ (consumidor, roda via `npm run worker`)
 src/lib/                  # utilitários puros sem I/O (cn(), env.ts) + client do Better Auth (auth-client.ts)
 ```
 

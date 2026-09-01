@@ -5,6 +5,7 @@ import { requireTicketPermission } from "@/server/auth/authorize";
 import { db } from "@/server/db/client";
 import { ticketPriorityValues, ticketStatusValues, type TicketStatus } from "@/server/db/schema";
 import { publishTicketEvent } from "@/server/realtime/publisher";
+import { enqueueAiTriage } from "@/server/queue/ai-triage-queue";
 import {
   addComment,
   addTagToTicket,
@@ -122,6 +123,8 @@ export async function submitPublicTicketAction(
       body,
       priority,
     });
+
+    await enqueueAiTriage(created.id);
 
     return { status: "success", ticketId: created.id };
   } catch (error) {

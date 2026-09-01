@@ -14,10 +14,23 @@ jobs:
   quality:
     name: Typecheck, lint, format, test, build
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      # Valores fictícios: suficientes para o build avaliar a config de auth/DB
-      # sem se conectar a nada de verdade. Testes de integração usam PGlite
-      # (ver docs/decisions/0003-pglite-for-tests.md), não estes serviços.
+      # DATABASE_URL é fictício: suficiente para o build avaliar a config de
+      # auth/DB sem se conectar a nada de verdade — testes de integração de
+      # banco usam PGlite (ver docs/decisions/0003-pglite-for-tests.md).
+      # REDIS_URL aponta para o serviço real acima: o teste de fila em
+      # src/server/queue/redis-integration.test.ts roda de verdade aqui
+      # (localmente ele pula, por não haver Redis disponível).
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ai_customer_operations"
       REDIS_URL: "redis://localhost:6379"
       BETTER_AUTH_SECRET: "ci-only-secret-not-for-production"

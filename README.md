@@ -37,6 +37,7 @@ cp .env.example .env.local   # preencha os valores necessários
 docker compose up -d          # sobe Postgres (pgvector) + Redis
 npm install
 npm run dev
+npm run worker                # em outro terminal — processa a triagem de IA em fila (BullMQ)
 ```
 
 Abra [http://localhost:3000](http://localhost:3000).
@@ -52,6 +53,7 @@ npm run format:check     # prettier --check .
 npm run test             # vitest run
 npm run test:coverage    # vitest run --coverage
 npm run build             # next build
+npm run worker             # worker BullMQ da fila ai-triage (processo separado do `dev`)
 
 npm run auth:generate    # regenera src/server/db/schema/auth.ts a partir da config do Better Auth
 npm run db:generate      # gera migration SQL a partir do schema Drizzle
@@ -81,8 +83,11 @@ commit com typecheck, lint, testes e build passando:
    (`/knowledge-base`); agente de triagem acionável pelo agente humano em
    `/tickets/[id]`. Validado com chamada real à API — ver
    [ADR 0007](docs/decisions/0007-ai-provider-groq.md).
-5. **Polimento** — filas assíncronas, billing, e-mail transacional,
-   analytics, CI completo.
+5. **Polimento** 🚧 — filas assíncronas (BullMQ processa a triagem de IA em
+   background na criação do ticket — ver [ADR 0010](docs/decisions/0010-bullmq-async-triage.md)),
+   painel de analytics (`/analytics`), busca de tickets na inbox. Billing,
+   e-mail transacional e CI com serviços reais (Postgres+Redis) seguem em
+   andamento.
 
 ## Documentação para agentes
 

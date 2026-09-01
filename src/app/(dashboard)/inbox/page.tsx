@@ -6,6 +6,7 @@ import { listInboxTickets } from "@/server/services/tickets";
 import { ticketStatusValues, type TicketStatus } from "@/server/db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { SlaIndicator } from "@/components/tickets/sla-indicator";
 import { cn } from "@/lib/utils";
@@ -20,12 +21,12 @@ const STATUS_LABEL: Record<TicketStatus, string> = {
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const session = await getCurrentSession();
   if (!session?.session.activeOrganizationId) redirect("/sign-in");
 
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam, q } = await searchParams;
   const status = ticketStatusValues.includes(statusParam as TicketStatus)
     ? (statusParam as TicketStatus)
     : undefined;
@@ -33,6 +34,7 @@ export default async function InboxPage({
   const tickets = await listInboxTickets(db, {
     organizationId: session.session.activeOrganizationId,
     status,
+    search: q,
   });
 
   return (
@@ -43,6 +45,17 @@ export default async function InboxPage({
           Tickets da sua organização, mais recentes primeiro.
         </p>
       </div>
+
+      <form method="get" action="/inbox" className="flex gap-2">
+        {status && <input type="hidden" name="status" value={status} />}
+        <Input
+          type="search"
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Buscar por assunto…"
+          className="max-w-xs"
+        />
+      </form>
 
       <nav className="flex gap-1 border-b border-border pb-2 text-sm">
         <Link

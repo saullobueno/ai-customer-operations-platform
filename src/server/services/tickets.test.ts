@@ -189,4 +189,24 @@ describe("tickets service", () => {
     expect(open.map((t) => t.id)).toContain(created.id);
     expect(resolved).toHaveLength(0);
   });
+
+  it("busca tickets por trecho do assunto, sem diferenciar maiúsculas/minúsculas", async () => {
+    const { org, cust } = await seed(db);
+    const sensor = await createTicket(db, {
+      organizationId: org.id,
+      customerId: cust.id,
+      subject: "Sensor offline",
+      body: "...",
+    });
+    await createTicket(db, {
+      organizationId: org.id,
+      customerId: cust.id,
+      subject: "Dúvida de faturamento",
+      body: "...",
+    });
+
+    const results = await listInboxTickets(db, { organizationId: org.id, search: "SENSOR" });
+
+    expect(results.map((t) => t.id)).toEqual([sensor.id]);
+  });
 });
