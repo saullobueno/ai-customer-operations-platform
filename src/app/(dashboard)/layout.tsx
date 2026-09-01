@@ -29,6 +29,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           >
             Base de conhecimento
           </Link>
+          <Link href="/analytics" className="text-sm text-muted-foreground hover:text-foreground">
+            Analytics
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
