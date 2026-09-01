@@ -13,18 +13,18 @@ encaminha para a equipe certa — com tudo registrado em audit log.
 
 ## Stack
 
-| Camada      | Tecnologia                                    |
-| ----------- | --------------------------------------------- |
-| Framework   | Next.js 16 (App Router), React 19, TypeScript |
-| Estilo      | Tailwind CSS v4                               |
-| Banco       | PostgreSQL + pgvector, via Drizzle ORM        |
-| Cache/filas | Redis + BullMQ                                |
-| Auth        | Better Auth                                   |
+| Camada      | Tecnologia                                        |
+| ----------- | ------------------------------------------------- |
+| Framework   | Next.js 16 (App Router), React 19, TypeScript     |
+| Estilo      | Tailwind CSS v4                                   |
+| Banco       | PostgreSQL + pgvector, via Drizzle ORM            |
+| Cache/filas | Redis + BullMQ                                    |
+| Auth        | Better Auth                                       |
 | IA          | Vercel AI SDK + GroqCloud (`openai/gpt-oss-120b`) |
-| Pagamento   | Stripe (modo teste)                           |
-| E-mail      | Resend                                        |
-| Testes      | Vitest + Testing Library                      |
-| CI          | GitHub Actions                                |
+| Pagamento   | Stripe (modo teste)                               |
+| E-mail      | Resend                                            |
+| Testes      | Vitest + Testing Library                          |
+| CI          | GitHub Actions                                    |
 
 ## Rodando localmente
 
