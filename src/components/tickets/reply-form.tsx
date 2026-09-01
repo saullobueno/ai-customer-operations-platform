@@ -7,6 +7,7 @@ export function ReplyForm({ ticketId }: { ticketId: string }) {
     <form action={replyToTicketAction} className="flex flex-col gap-3">
       <input type="hidden" name="ticketId" value={ticketId} />
       <textarea
+        id="reply-body"
         name="body"
         required
         rows={4}

@@ -28,7 +28,10 @@ gratuitos. Ver `docs/decisions/` para o histórico de decisões de arquitetura
 - **Dados**: PostgreSQL + `pgvector` via Drizzle ORM; Redis + BullMQ para
   filas assíncronas.
 - **Auth**: Better Auth.
-- **IA**: Vercel AI SDK, com Anthropic/OpenAI plugáveis via env vars.
+- **IA**: Vercel AI SDK + GroqCloud (`openai/gpt-oss-120b`, configurável via
+  `AI_MODEL_ID`) — ver [0007](docs/decisions/0007-ai-provider-groq.md). RAG
+  usa full-text search do Postgres, não embeddings — ver
+  [0008](docs/decisions/0008-rag-full-text-search.md).
 - **Pagamento/E-mail**: Stripe (modo teste) e Resend.
 - **Package manager**: npm (ver [0001](docs/decisions/0001-package-manager-npm.md)).
 
@@ -69,7 +72,7 @@ com a suíte de qualidade verde:
 1. Scaffold e tooling (concluída)
 2. Fundação técnica — schema multi-tenant, RBAC, auth, design system (concluída)
 3. Fluxo vertical de tickets — inbox, comentários, SLA, realtime, audit log (concluída)
-4. Camada de IA — classificação, sumarização, RAG, agente
+4. Camada de IA — classificação, sumarização, RAG, agente (concluída)
 5. Polimento — filas, billing, e-mail, analytics, CI completo
 
 ## Camadas (`src/`)
@@ -86,6 +89,7 @@ src/server/auth/          # config do Better Auth (config.ts), RBAC (permissions
 src/server/services/      # lógica de negócio pura (recebe `db` por parâmetro — ver AppDatabase em types.ts)
 src/server/actions/       # Server Actions ("use server") — ponte fina entre forms e services, com checagem de RBAC
 src/server/realtime/      # publisher/subscriber de eventos em processo (ver ADR 0006)
+src/server/ai/            # client do provedor de IA (client.ts) + prompts/schemas (triage.ts) — sem `db`
 src/lib/                  # utilitários puros sem I/O (cn(), env.ts) + client do Better Auth (auth-client.ts)
 ```
 
@@ -105,6 +109,17 @@ Better Auth). Mudou a config de plugins (ex.: novo campo, novo plugin)?
 Rode `npm run auth:generate` de novo — não edite `auth.ts` manualmente, a
 próxima geração sobrescreve. Depois de gerar, rode `npm run db:generate`
 para criar a migration SQL correspondente em `drizzle/`.
+
+## Testes de IA não fazem chamada de rede
+
+Toda chamada a `generateObject`/`generateText` (pacote `ai`) é mockada nos
+testes via `vi.mock("ai", ...)` e `vi.mock("@/server/ai/client", ...)` — ver
+`src/server/ai/triage.test.ts` e `src/server/services/ai-triage.test.ts`.
+Isso valida o formato do prompt e o parsing da resposta, não se o modelo
+está ativo ou aceita o schema — para isso, depois de qualquer mudança em
+`src/server/ai/`, rode manualmente uma chamada real (script descartável com
+`node --env-file=.env.local`, como feito para validar o [ADR 0007](docs/decisions/0007-ai-provider-groq.md))
+antes de considerar a mudança pronta.
 
 ## Convenções
 

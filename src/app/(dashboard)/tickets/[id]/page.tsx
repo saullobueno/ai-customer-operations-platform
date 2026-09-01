@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { getTicketDetail } from "@/server/services/tickets";
 import { listOrganizationMembers } from "@/server/services/members";
+import { getLatestAiSuggestion } from "@/server/services/ai-triage";
 import { Badge } from "@/components/ui/badge";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { SlaIndicator } from "@/components/tickets/sla-indicator";
@@ -12,6 +13,7 @@ import { ReplyForm } from "@/components/tickets/reply-form";
 import { AssigneeSelect } from "@/components/tickets/assignee-select";
 import { StatusSelect } from "@/components/tickets/status-select";
 import { TagForm } from "@/components/tickets/tag-form";
+import { AiSuggestionPanel } from "@/components/tickets/ai-suggestion-panel";
 import { TicketRealtimeListener } from "@/components/ticket-realtime-listener";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +27,10 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     notFound();
   }
 
-  const members = await listOrganizationMembers(db, session.session.activeOrganizationId);
+  const [members, aiSuggestion] = await Promise.all([
+    listOrganizationMembers(db, session.session.activeOrganizationId),
+    getLatestAiSuggestion(db, ticket.id),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -68,6 +73,12 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         ))}
         <TagForm ticketId={ticket.id} />
       </div>
+
+      <AiSuggestionPanel
+        ticketId={ticket.id}
+        currentPriority={ticket.priority}
+        suggestion={aiSuggestion}
+      />
 
       <CommentThread comments={ticket.comments} />
 

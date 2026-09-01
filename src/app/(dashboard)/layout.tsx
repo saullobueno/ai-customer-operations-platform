@@ -19,9 +19,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-border px-6 py-3">
-        <Link href="/inbox" className="font-semibold tracking-tight">
-          AI Customer Operations
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/inbox" className="font-semibold tracking-tight">
+            AI Customer Operations
+          </Link>
+          <Link
+            href="/knowledge-base"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Base de conhecimento
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <NotificationBell notifications={notifications} unreadCount={unreadCount} />

@@ -20,7 +20,7 @@ encaminha para a equipe certa — com tudo registrado em audit log.
 | Banco       | PostgreSQL + pgvector, via Drizzle ORM        |
 | Cache/filas | Redis + BullMQ                                |
 | Auth        | Better Auth                                   |
-| IA          | Vercel AI SDK (Anthropic / OpenAI)            |
+| IA          | Vercel AI SDK + GroqCloud (`openai/gpt-oss-120b`) |
 | Pagamento   | Stripe (modo teste)                           |
 | E-mail      | Resend                                        |
 | Testes      | Vitest + Testing Library                      |
@@ -75,8 +75,12 @@ commit com typecheck, lint, testes e build passando:
    equipe atende pela inbox (`/inbox` → `/tickets/[id]`): comentários
    públicos e notas internas, atribuição, status, tags, SLA, atualização em
    tempo real via SSE, notificações e audit log.
-4. **Camada de IA** — classificação de tickets, sumarização, sentimento,
-   resposta sugerida, busca semântica (RAG), agente de IA.
+4. **Camada de IA** ✅ — classificação de tickets, sentimento, resumo e
+   resposta sugerida via GroqCloud (`openai/gpt-oss-120b`); RAG via
+   full-text search do Postgres sobre uma base de conhecimento
+   (`/knowledge-base`); agente de triagem acionável pelo agente humano em
+   `/tickets/[id]`. Validado com chamada real à API — ver
+   [ADR 0007](docs/decisions/0007-ai-provider-groq.md).
 5. **Polimento** — filas assíncronas, billing, e-mail transacional,
    analytics, CI completo.
 

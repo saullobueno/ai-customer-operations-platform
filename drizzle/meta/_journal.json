@@ -15,6 +15,13 @@
       "when": 1788219930703,
       "tag": "0001_tickets_domain",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788223226173,
+      "tag": "0002_knowledge_base",
+      "breakpoints": true
     }
   ]
 }
