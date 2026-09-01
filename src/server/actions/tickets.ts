@@ -8,17 +8,28 @@ import { publishTicketEvent } from "@/server/realtime/publisher";
 import { enqueueAiTriage } from "@/server/queue/ai-triage-queue";
 import { env } from "@/lib/env";
 import { getUserById } from "@/server/services/members";
-import { sendTicketAssignedEmail } from "@/server/email/notifications";
+import {
+  sendTicketAssignedEmail,
+  sendTicketCreatedEmail,
+  sendTicketReplyEmail,
+} from "@/server/email/notifications";
 import {
   addComment,
   addTagToTicket,
   assignTicket,
   createTicket,
   findOrCreateCustomer,
+  findOrganizationById,
   findOrganizationBySlug,
+  getPublicTicketDetail,
   getTicketDetail,
+  listCustomerTickets,
   updateTicketStatus,
 } from "@/server/services/tickets";
+
+function trackingUrl(orgSlug: string, ticketId: string, email: string) {
+  return `${env.BETTER_AUTH_URL}/report/tickets/${ticketId}?org=${orgSlug}&email=${encodeURIComponent(email)}`;
+}
 
 function requiredString(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -48,6 +59,20 @@ export async function replyToTicketAction(formData: FormData) {
     authorUserId: userId,
     attachmentUrl,
   });
+
+  if (!internal) {
+    const [org, ticketRecord] = await Promise.all([
+      findOrganizationById(db, organizationId),
+      getTicketDetail(db, ticketId),
+    ]);
+    if (org && ticketRecord) {
+      await sendTicketReplyEmail({
+        to: ticketRecord.customer.email,
+        ticketSubject: ticketRecord.subject,
+        trackingUrl: trackingUrl(org.slug, ticketId, ticketRecord.customer.email),
+      });
+    }
+  }
 
   publishTicketEvent(ticketId, { type: internal ? "internal_note_added" : "comment_added" });
   revalidatePath(`/tickets/${ticketId}`);
@@ -117,7 +142,7 @@ export async function addTagAction(formData: FormData) {
 export type PublicTicketFormState =
   | { status: "idle" }
   | { status: "error"; message: string }
-  | { status: "success"; ticketId: string };
+  | { status: "success"; ticketId: string; orgSlug: string; email: string };
 
 /** Sem checagem de RBAC de propósito: quem abre um ticket ainda não é membro da organização. */
 export async function submitPublicTicketAction(
@@ -150,11 +175,95 @@ export async function submitPublicTicketAction(
 
     await enqueueAiTriage(created.id);
 
-    return { status: "success", ticketId: created.id };
+    await sendTicketCreatedEmail({
+      to: email,
+      ticketSubject: subject,
+      trackingUrl: trackingUrl(org.slug, created.id, email),
+    });
+
+    return { status: "success", ticketId: created.id, orgSlug: org.slug, email };
   } catch (error) {
     return {
       status: "error",
       message: error instanceof Error ? error.message : "Não foi possível abrir o ticket.",
+    };
+  }
+}
+
+export type TrackTicketsFormState =
+  | { status: "idle" }
+  | { status: "error"; message: string }
+  | {
+      status: "success";
+      email: string;
+      tickets: Awaited<ReturnType<typeof listCustomerTickets>>;
+    };
+
+/** Sem checagem de RBAC de propósito: o cliente não é membro da organização. */
+export async function trackTicketsAction(
+  _prevState: TrackTicketsFormState,
+  formData: FormData,
+): Promise<TrackTicketsFormState> {
+  try {
+    const orgSlug = requiredString(formData, "orgSlug");
+    const email = requiredString(formData, "email");
+
+    const org = await findOrganizationBySlug(db, orgSlug);
+    if (!org) return { status: "error", message: "Organização não encontrada." };
+
+    const tickets = await listCustomerTickets(db, { organizationId: org.id, email });
+    return { status: "success", email, tickets };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Não foi possível buscar seus tickets.",
+    };
+  }
+}
+
+export type PublicReplyFormState = { status: "idle" } | { status: "error"; message: string };
+
+/**
+ * Sem checagem de RBAC de propósito: o cliente não é membro da organização
+ * — a segurança aqui é o par (ticketId, e-mail do cliente dono do ticket),
+ * validado em `getPublicTicketDetail`.
+ */
+export async function submitPublicReplyAction(
+  _prevState: PublicReplyFormState,
+  formData: FormData,
+): Promise<PublicReplyFormState> {
+  try {
+    const orgSlug = requiredString(formData, "orgSlug");
+    const ticketId = requiredString(formData, "ticketId");
+    const email = requiredString(formData, "email");
+    const body = requiredString(formData, "body");
+
+    const org = await findOrganizationBySlug(db, orgSlug);
+    if (!org) return { status: "error", message: "Organização não encontrada." };
+
+    const ticketRecord = await getPublicTicketDetail(db, {
+      ticketId,
+      organizationId: org.id,
+      email,
+    });
+    if (!ticketRecord) return { status: "error", message: "Ticket não encontrado." };
+
+    await addComment(db, {
+      ticketId,
+      organizationId: org.id,
+      body,
+      internal: false,
+      authorCustomerId: ticketRecord.customerId,
+    });
+
+    publishTicketEvent(ticketId, { type: "comment_added" });
+    revalidatePath(`/report/tickets/${ticketId}`);
+
+    return { status: "idle" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Não foi possível enviar sua resposta.",
     };
   }
 }

@@ -20,6 +20,11 @@ export async function findOrganizationBySlug(db: AppDatabase, slug: string) {
   return org ?? null;
 }
 
+export async function findOrganizationById(db: AppDatabase, organizationId: string) {
+  const [org] = await db.select().from(organization).where(eq(organization.id, organizationId));
+  return org ?? null;
+}
+
 export async function findOrCreateCustomer(
   db: AppDatabase,
   input: { organizationId: string; name: string; email: string },
@@ -268,6 +273,45 @@ export async function getTicketDetail(db: AppDatabase, ticketId: string) {
       },
     },
   });
+}
+
+/** Portal do cliente: tickets do e-mail informado dentro da organização do slug. */
+export async function listCustomerTickets(
+  db: AppDatabase,
+  input: { organizationId: string; email: string },
+) {
+  return db
+    .select({
+      id: ticket.id,
+      subject: ticket.subject,
+      status: ticket.status,
+      priority: ticket.priority,
+      createdAt: ticket.createdAt,
+      slaDueAt: ticket.slaDueAt,
+      resolvedAt: ticket.resolvedAt,
+    })
+    .from(ticket)
+    .innerJoin(customer, eq(customer.id, ticket.customerId))
+    .where(and(eq(ticket.organizationId, input.organizationId), eq(customer.email, input.email)))
+    .orderBy(desc(ticket.createdAt));
+}
+
+/**
+ * Portal do cliente: mesmo dado de `getTicketDetail`, mas só retorna se o
+ * ticket pertence à organização e ao e-mail informados (o cliente não tem
+ * sessão autenticada — email é a única credencial), e nunca inclui notas
+ * internas, que são de uso exclusivo da equipe.
+ */
+export async function getPublicTicketDetail(
+  db: AppDatabase,
+  input: { ticketId: string; organizationId: string; email: string },
+) {
+  const found = await getTicketDetail(db, input.ticketId);
+  if (!found) return null;
+  if (found.organizationId !== input.organizationId) return null;
+  if (found.customer.email !== input.email) return null;
+
+  return { ...found, comments: found.comments.filter((c) => !c.internal) };
 }
 
 async function notifyAssignee(

@@ -2,9 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/server/auth/session";
 import { db } from "@/server/db/client";
-import { listInboxTickets } from "@/server/services/tickets";
+import { findOrganizationById, listInboxTickets } from "@/server/services/tickets";
 import { ticketStatusValues, type TicketStatus } from "@/server/db/schema";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
@@ -31,19 +32,31 @@ export default async function InboxPage({
     ? (statusParam as TicketStatus)
     : undefined;
 
-  const tickets = await listInboxTickets(db, {
-    organizationId: session.session.activeOrganizationId,
-    status,
-    search: q,
-  });
+  const [tickets, organization] = await Promise.all([
+    listInboxTickets(db, {
+      organizationId: session.session.activeOrganizationId,
+      status,
+      search: q,
+    }),
+    findOrganizationById(db, session.session.activeOrganizationId),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
-        <p className="text-sm text-muted-foreground">
-          Tickets da sua organização, mais recentes primeiro.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
+          <p className="text-sm text-muted-foreground">
+            Tickets da sua organização, mais recentes primeiro.
+          </p>
+        </div>
+        {organization && (
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/report?org=${organization.slug}`} target="_blank">
+              Novo ticket
+            </Link>
+          </Button>
+        )}
       </div>
 
       <form method="get" action="/inbox" className="flex gap-2">

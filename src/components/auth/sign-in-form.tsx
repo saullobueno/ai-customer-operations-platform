@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function SignInForm() {
+export function SignInForm({ redirectTo = "/inbox" }: { redirectTo?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export function SignInForm() {
       return;
     }
 
-    router.push("/inbox");
+    router.push(redirectTo);
     router.refresh();
   }
 

@@ -2,6 +2,7 @@
 
 import { updateTicketStatusAction } from "@/server/actions/tickets";
 import { ticketStatusValues, type TicketStatus } from "@/server/db/schema";
+import { PendingSelect } from "@/components/ui/pending-select";
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   open: "Aberto",
@@ -17,7 +18,7 @@ export function StatusSelect({ ticketId, status }: { ticketId: string; status: T
       onChange={(event) => (event.currentTarget as HTMLFormElement).requestSubmit()}
     >
       <input type="hidden" name="ticketId" value={ticketId} />
-      <select
+      <PendingSelect
         name="status"
         defaultValue={status}
         className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
@@ -27,7 +28,7 @@ export function StatusSelect({ ticketId, status }: { ticketId: string; status: T
             {STATUS_LABEL[value]}
           </option>
         ))}
-      </select>
+      </PendingSelect>
     </form>
   );
 }

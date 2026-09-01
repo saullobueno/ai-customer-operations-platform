@@ -1,15 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { submitPublicTicketAction, type PublicTicketFormState } from "@/server/actions/tickets";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const initialState: PublicTicketFormState = { status: "idle" };
 
 export function PublicReportForm({ orgSlug }: { orgSlug: string }) {
-  const [state, formAction, pending] = useActionState(submitPublicTicketAction, initialState);
+  const [state, formAction] = useActionState(submitPublicTicketAction, initialState);
 
   if (state.status === "success") {
     return (
@@ -18,6 +19,12 @@ export function PublicReportForm({ orgSlug }: { orgSlug: string }) {
         <p className="mt-1 text-sm text-muted-foreground">
           Protocolo: <code className="font-mono">{state.ticketId}</code>
         </p>
+        <Link
+          href={`/report/tickets/${state.ticketId}?org=${state.orgSlug}&email=${encodeURIComponent(state.email)}`}
+          className="mt-4 inline-block text-sm underline underline-offset-2"
+        >
+          Acompanhar este chamado
+        </Link>
       </div>
     );
   }
@@ -62,9 +69,7 @@ export function PublicReportForm({ orgSlug }: { orgSlug: string }) {
         </select>
       </div>
       {state.status === "error" && <p className="text-sm text-destructive">{state.message}</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Enviando…" : "Abrir ticket"}
-      </Button>
+      <SubmitButton pendingText="Enviando…">Abrir ticket</SubmitButton>
     </form>
   );
 }

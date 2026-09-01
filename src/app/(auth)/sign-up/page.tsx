@@ -2,7 +2,13 @@ import Link from "next/link";
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
@@ -11,10 +17,13 @@ export default function SignUpPage() {
           <CardDescription>Comece a atender seus clientes em minutos.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <SignUpForm />
+          <SignUpForm redirectTo={next} />
           <p className="text-sm text-muted-foreground">
             Já tem conta?{" "}
-            <Link href="/sign-in" className="text-foreground underline underline-offset-4">
+            <Link
+              href={next ? `/sign-in?next=${encodeURIComponent(next)}` : "/sign-in"}
+              className="text-foreground underline underline-offset-4"
+            >
               Entrar
             </Link>
           </p>

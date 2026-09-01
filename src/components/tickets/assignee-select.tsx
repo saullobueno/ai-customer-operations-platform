@@ -1,6 +1,7 @@
 "use client";
 
 import { assignTicketAction } from "@/server/actions/tickets";
+import { PendingSelect } from "@/components/ui/pending-select";
 
 export function AssigneeSelect({
   ticketId,
@@ -17,7 +18,7 @@ export function AssigneeSelect({
       onChange={(event) => (event.currentTarget as HTMLFormElement).requestSubmit()}
     >
       <input type="hidden" name="ticketId" value={ticketId} />
-      <select
+      <PendingSelect
         name="assigneeId"
         defaultValue={currentAssigneeId ?? ""}
         className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
@@ -28,7 +29,7 @@ export function AssigneeSelect({
             {m.name}
           </option>
         ))}
-      </select>
+      </PendingSelect>
     </form>
   );
 }

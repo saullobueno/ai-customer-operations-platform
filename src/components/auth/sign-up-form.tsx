@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function SignUpForm() {
+export function SignUpForm({ redirectTo = "/onboarding" }: { redirectTo?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export function SignUpForm() {
       return;
     }
 
-    router.push("/onboarding");
+    router.push(redirectTo);
     router.refresh();
   }
 

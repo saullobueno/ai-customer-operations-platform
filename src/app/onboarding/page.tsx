@@ -1,15 +1,29 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "@/server/auth/config";
 import { getCurrentSession } from "@/server/auth/session";
-import { createOrganizationAction } from "@/server/actions/organizations";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { CreateOrganizationForm } from "@/components/organizations/create-organization-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function OnboardingPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/sign-in");
   if (session.session.activeOrganizationId) redirect("/inbox");
+
+  /**
+   * Better Auth não ativa organização nenhuma automaticamente no login —
+   * a sessão fica com `activeOrganizationId` nulo mesmo que o usuário já
+   * seja membro de uma. Sem isso, todo login de quem já tem organização
+   * cai aqui e vê um formulário de "criar" em vez de simplesmente entrar.
+   */
+  const existingOrgs = await auth.api.listOrganizations({ headers: await headers() });
+  if (existingOrgs.length > 0) {
+    await auth.api.setActiveOrganization({
+      headers: await headers(),
+      body: { organizationId: existingOrgs[0].id },
+    });
+    redirect("/inbox");
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -21,13 +35,7 @@ export default async function OnboardingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={createOrganizationAction} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Nome da organização</Label>
-              <Input id="name" name="name" placeholder="Econform" required />
-            </div>
-            <Button type="submit">Criar organização</Button>
-          </form>
+          <CreateOrganizationForm />
         </CardContent>
       </Card>
     </div>

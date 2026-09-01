@@ -42,6 +42,45 @@ npm run worker                # em outro terminal — processa a triagem de IA e
 
 Abra [http://localhost:3000](http://localhost:3000).
 
+### Sem Docker
+
+Instale o PostgreSQL localmente (ex.: `winget install PostgreSQL.PostgreSQL.17`
+no Windows) e aponte `DATABASE_URL` no `.env.local` para essa instância —
+ver [ADR 0012](docs/decisions/0012-pglite-for-local-dev.md), que documenta
+por que um Postgres real embutido no processo (PGlite) foi tentado e
+descartado para o `npm run dev` nesta máquina. Redis é opcional: sem ele, a
+triagem de IA automática (fila BullMQ) fica desativada, mas o restante do
+app funciona normalmente e a triagem pode ser disparada manualmente pela
+UI.
+
+## Deploy (Vercel)
+
+Ver [ADR 0014](docs/decisions/0014-vercel-deployment.md) para o raciocínio
+completo. Passo a passo:
+
+1. **Banco**: crie um projeto gratuito em [neon.tech](https://neon.tech) e
+   copie a connection string.
+2. **E-mail**: crie uma conta gratuita em [resend.com](https://resend.com)
+   e gere uma API key — não precisa verificar domínio próprio, o remetente
+   já usa o domínio sandbox `onboarding@resend.dev`.
+3. **IA**: já existe uma `GROQ_API_KEY` (console.groq.com).
+4. Rode as migrations contra o banco do Neon:
+   ```bash
+   DATABASE_URL="<connection string do Neon>" npx drizzle-kit migrate
+   ```
+5. Importe o repositório na Vercel (vercel.com → New Project → Import do
+   GitHub) e configure as variáveis de ambiente:
+   ```
+   DATABASE_URL      = <connection string do Neon>
+   BETTER_AUTH_SECRET = <gere um valor novo, ex.: openssl rand -base64 32 — nunca reaproveite o de dev>
+   BETTER_AUTH_URL    = https://<seu-projeto>.vercel.app
+   GROQ_API_KEY        = <sua chave>
+   RESEND_API_KEY      = <sua chave>
+   ```
+6. Deploy. `REDIS_URL` e as chaves do Stripe ficam de fora de propósito —
+   o app já funciona sem elas (triagem de IA fica manual via UI, billing
+   fica em modo mock).
+
 ## Scripts
 
 ```bash

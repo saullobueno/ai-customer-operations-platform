@@ -1,5 +1,5 @@
 import { replyToTicketAction } from "@/server/actions/tickets";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -26,7 +26,7 @@ export function ReplyForm({ ticketId }: { ticketId: string }) {
           <input type="checkbox" name="internal" className="size-4 rounded border-input" />
           Nota interna (não visível para o cliente)
         </Label>
-        <Button type="submit">Enviar</Button>
+        <SubmitButton pendingText="Enviando…">Enviar</SubmitButton>
       </div>
     </form>
   );

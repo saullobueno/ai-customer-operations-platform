@@ -1,7 +1,7 @@
 import { runAiTriageAction, applyAiSuggestedPriorityAction } from "@/server/actions/ai";
 import type { TicketPriority } from "@/server/db/schema";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriorityBadge } from "@/components/tickets/priority-badge";
 import { UseSuggestionButton } from "@/components/tickets/use-suggestion-button";
@@ -31,9 +31,9 @@ export function AiSuggestionPanel({
         <CardTitle className="text-base">Sugestão da IA</CardTitle>
         <form action={runAiTriageAction}>
           <input type="hidden" name="ticketId" value={ticketId} />
-          <Button type="submit" size="sm" variant="outline">
+          <SubmitButton size="sm" variant="outline" pendingText="Analisando…">
             {suggestion ? "Analisar novamente" : "Analisar com IA"}
-          </Button>
+          </SubmitButton>
         </form>
       </CardHeader>
       {suggestion && (
@@ -54,9 +54,9 @@ export function AiSuggestionPanel({
               <form action={applyAiSuggestedPriorityAction} className="ml-auto">
                 <input type="hidden" name="ticketId" value={ticketId} />
                 <input type="hidden" name="priority" value={suggestion.suggestedPriority} />
-                <Button type="submit" size="sm" variant="secondary">
+                <SubmitButton size="sm" variant="secondary" pendingText="Aplicando…">
                   Aplicar
-                </Button>
+                </SubmitButton>
               </form>
             </div>
           )}

@@ -70,6 +70,11 @@ não para `npm test` local. Padrão para esse caso:
 (ver `src/server/queue/redis-integration.test.ts`) — pula localmente sem
 quebrar, roda de verdade no CI.
 
+`npm run dev` continua exigindo Postgres/Redis reais (Docker ou instância
+local instalada nativamente) — PGlite embutido no processo foi tentado para
+esse caso e descartado por instabilidade (falhas intermitentes com
+Turbopack) — ver [0012](docs/decisions/0012-pglite-for-local-dev.md).
+
 ## Estrutura de fases
 
 O projeto é construído em fases sequenciais, cada uma terminando em commit
@@ -119,6 +124,16 @@ Better Auth). Mudou a config de plugins (ex.: novo campo, novo plugin)?
 Rode `npm run auth:generate` de novo — não edite `auth.ts` manualmente, a
 próxima geração sobrescreve. Depois de gerar, rode `npm run db:generate`
 para criar a migration SQL correspondente em `drizzle/`.
+
+Exceção conhecida: `@better-auth/cli` (`^1.4.21`) está desatualizado em
+relação ao core `better-auth` (`^1.7.2`) e não gera campos que o core já
+exige em runtime (ex.: `account.issuer` — ver
+[0012](docs/decisions/0012-pglite-for-local-dev.md)). Se `auth:generate`
+sobrescrever `auth.ts` e um erro `BetterAuthError: The field "X" does not
+exist in the ... Drizzle schema` aparecer, o campo precisa ser readicionado
+à mão e uma migration gerada com `db:generate` — confira
+`npm view @better-auth/cli version` para saber se o upstream já alcançou o
+core antes de repetir essa correção manual.
 
 ## Testes de IA não fazem chamada de rede
 

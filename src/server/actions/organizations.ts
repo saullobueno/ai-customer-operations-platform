@@ -16,17 +16,33 @@ function slugify(value: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-export async function createOrganizationAction(formData: FormData) {
+export type CreateOrganizationFormState = { status: "idle" } | { status: "error"; message: string };
+
+export async function createOrganizationAction(
+  _prevState: CreateOrganizationFormState,
+  formData: FormData,
+): Promise<CreateOrganizationFormState> {
   const session = await getCurrentSession();
   if (!session) redirect("/sign-in");
 
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) throw new Error("Informe o nome da organização.");
+  if (!name) return { status: "error", message: "Informe o nome da organização." };
 
-  await auth.api.createOrganization({
-    headers: await headers(),
-    body: { name, slug: slugify(name) },
-  });
+  try {
+    await auth.api.createOrganization({
+      headers: await headers(),
+      body: { name, slug: slugify(name) },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("already exists")) {
+      return {
+        status: "error",
+        message: `Já existe uma organização chamada "${name}" (o nome vira o link público de abertura de chamados, então precisa ser único). Tente um nome um pouco diferente.`,
+      };
+    }
+    return { status: "error", message: "Não foi possível criar a organização. Tente de novo." };
+  }
 
   redirect("/inbox");
 }
