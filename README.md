@@ -21,8 +21,8 @@ encaminha para a equipe certa — com tudo registrado em audit log.
 | Cache/filas | Redis + BullMQ                                    |
 | Auth        | Better Auth                                       |
 | IA          | Vercel AI SDK + GroqCloud (`openai/gpt-oss-120b`) |
-| Pagamento   | Stripe (modo teste)                               |
-| E-mail      | Resend                                            |
+| Pagamento   | Stripe (modo teste, mockado sem chave)            |
+| E-mail      | Resend (mockado sem chave)                        |
 | Testes      | Vitest + Testing Library                          |
 | CI          | GitHub Actions                                    |
 
@@ -83,11 +83,24 @@ commit com typecheck, lint, testes e build passando:
    (`/knowledge-base`); agente de triagem acionável pelo agente humano em
    `/tickets/[id]`. Validado com chamada real à API — ver
    [ADR 0007](docs/decisions/0007-ai-provider-groq.md).
-5. **Polimento** 🚧 — filas assíncronas (BullMQ processa a triagem de IA em
-   background na criação do ticket — ver [ADR 0010](docs/decisions/0010-bullmq-async-triage.md)),
-   painel de analytics (`/analytics`), busca de tickets na inbox. Billing,
-   e-mail transacional e CI com serviços reais (Postgres+Redis) seguem em
-   andamento.
+5. **Polimento** ✅ — filas assíncronas (BullMQ processa a triagem de IA em
+   background na criação do ticket, com fallback manual — ver
+   [ADR 0010](docs/decisions/0010-bullmq-async-triage.md)), painel de
+   analytics (`/analytics`), busca de tickets na inbox, notificação por
+   e-mail na atribuição de ticket, anexos por URL, billing via Stripe
+   Checkout (`/billing`, mockado sem chave — ver
+   [ADR 0011](docs/decisions/0011-stripe-billing-mocked.md)) e CI com
+   serviço Redis real validando a fila de ponta a ponta.
+
+## O que está validado contra serviços reais vs. mockado
+
+| Integração          | Status                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| GroqCloud (IA)      | ✅ Validado com chamada real à API (ver ADR 0007)                                  |
+| Fila BullMQ + Redis | ✅ Validado no CI contra um serviço Redis real (`redis-integration.test.ts`)       |
+| Postgres + Drizzle  | ✅ Validado via PGlite (Postgres real) em todos os testes de integração            |
+| Stripe (billing)    | 🟡 Implementado, não validado contra API real — modo mock sem chave (ver ADR 0011) |
+| Resend (e-mail)     | 🟡 Implementado, não validado contra API real — modo mock sem chave                |
 
 ## Documentação para agentes
 

@@ -5,6 +5,7 @@ import {
   organization,
   tag,
   ticket,
+  ticketAttachment,
   ticketComment,
   ticketTag,
   type TicketPriority,
@@ -92,6 +93,8 @@ export async function addComment(
     internal?: boolean;
     authorUserId?: string | null;
     authorCustomerId?: string | null;
+    attachmentUrl?: string | null;
+    attachmentFileName?: string | null;
   },
 ) {
   const [comment] = await db
@@ -104,6 +107,15 @@ export async function addComment(
       authorCustomerId: input.authorCustomerId ?? null,
     })
     .returning();
+
+  if (input.attachmentUrl) {
+    await db.insert(ticketAttachment).values({
+      ticketId: input.ticketId,
+      commentId: comment.id,
+      fileUrl: input.attachmentUrl,
+      fileName: input.attachmentFileName?.trim() || input.attachmentUrl,
+    });
+  }
 
   const isFirstAgentReply = Boolean(input.authorUserId) && !input.internal;
   if (isFirstAgentReply) {
@@ -252,7 +264,7 @@ export async function getTicketDetail(db: AppDatabase, ticketId: string) {
       tags: { with: { tag: true } },
       comments: {
         orderBy: (comments, { asc }) => [asc(comments.createdAt)],
-        with: { authorUser: true, authorCustomer: true },
+        with: { authorUser: true, authorCustomer: true, attachments: true },
       },
     },
   });

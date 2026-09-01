@@ -1,5 +1,6 @@
 import { replyToTicketAction } from "@/server/actions/tickets";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function ReplyForm({ ticketId }: { ticketId: string }) {
@@ -13,6 +14,12 @@ export function ReplyForm({ ticketId }: { ticketId: string }) {
         rows={4}
         placeholder="Escreva uma resposta…"
         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+      />
+      <Input
+        name="attachmentUrl"
+        type="url"
+        placeholder="URL de um anexo (opcional)"
+        className="h-8 text-sm"
       />
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2 text-sm font-normal text-muted-foreground">

@@ -11,6 +11,7 @@ const envSchema = z.object({
   AI_MODEL_ID: z.string().min(1).default("openai/gpt-oss-120b"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_ID_PRO: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
 });
 

@@ -32,7 +32,9 @@ gratuitos. Ver `docs/decisions/` para o histórico de decisões de arquitetura
   `AI_MODEL_ID`) — ver [0007](docs/decisions/0007-ai-provider-groq.md). RAG
   usa full-text search do Postgres, não embeddings — ver
   [0008](docs/decisions/0008-rag-full-text-search.md).
-- **Pagamento/E-mail**: Stripe (modo teste) e Resend.
+- **Pagamento/E-mail**: Stripe (modo teste, mockado sem chave — ver
+  [0011](docs/decisions/0011-stripe-billing-mocked.md)) e Resend (mockado
+  sem chave — loga em vez de enviar).
 - **Package manager**: npm (ver [0001](docs/decisions/0001-package-manager-npm.md)).
 
 ## Comandos
@@ -77,7 +79,8 @@ com a suíte de qualidade verde:
 2. Fundação técnica — schema multi-tenant, RBAC, auth, design system (concluída)
 3. Fluxo vertical de tickets — inbox, comentários, SLA, realtime, audit log (concluída)
 4. Camada de IA — classificação, sumarização, RAG, agente (concluída)
-5. Polimento — filas, billing, e-mail, analytics, CI completo
+5. Polimento — filas (BullMQ), billing (Stripe, mockado), e-mail (Resend,
+   mockado), analytics, busca, CI com Redis real (concluída)
 
 ## Camadas (`src/`)
 
@@ -95,6 +98,8 @@ src/server/actions/       # Server Actions ("use server") — ponte fina entre f
 src/server/realtime/      # publisher/subscriber de eventos em processo (ver ADR 0006)
 src/server/ai/            # client do provedor de IA (client.ts) + prompts/schemas (triage.ts) — sem `db`
 src/server/queue/         # BullMQ: enqueueAiTriage (produtor) + workers/ (consumidor, roda via `npm run worker`)
+src/server/email/         # cliente Resend + notifications.ts — `resend` é `null` sem RESEND_API_KEY (modo mock)
+src/server/billing/       # cliente Stripe + checkout.ts — `stripe` é `null` sem STRIPE_SECRET_KEY (modo mock)
 src/lib/                  # utilitários puros sem I/O (cn(), env.ts) + client do Better Auth (auth-client.ts)
 ```
 

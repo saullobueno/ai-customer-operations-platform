@@ -6,6 +6,9 @@ import { db } from "@/server/db/client";
 import { ticketPriorityValues, ticketStatusValues, type TicketStatus } from "@/server/db/schema";
 import { publishTicketEvent } from "@/server/realtime/publisher";
 import { enqueueAiTriage } from "@/server/queue/ai-triage-queue";
+import { env } from "@/lib/env";
+import { getUserById } from "@/server/services/members";
+import { sendTicketAssignedEmail } from "@/server/email/notifications";
 import {
   addComment,
   addTagToTicket,
@@ -13,6 +16,7 @@ import {
   createTicket,
   findOrCreateCustomer,
   findOrganizationBySlug,
+  getTicketDetail,
   updateTicketStatus,
 } from "@/server/services/tickets";
 
@@ -28,6 +32,11 @@ export async function replyToTicketAction(formData: FormData) {
   const ticketId = requiredString(formData, "ticketId");
   const body = requiredString(formData, "body");
   const internal = formData.get("internal") === "on";
+  const attachmentUrlRaw = formData.get("attachmentUrl");
+  const attachmentUrl =
+    typeof attachmentUrlRaw === "string" && attachmentUrlRaw.trim() !== ""
+      ? attachmentUrlRaw.trim()
+      : null;
 
   const { userId, organizationId } = await requireTicketPermission({ ticket: ["update"] });
 
@@ -37,6 +46,7 @@ export async function replyToTicketAction(formData: FormData) {
     body,
     internal,
     authorUserId: userId,
+    attachmentUrl,
   });
 
   publishTicketEvent(ticketId, { type: internal ? "internal_note_added" : "comment_added" });
@@ -52,6 +62,20 @@ export async function assignTicketAction(formData: FormData) {
   const { userId, organizationId } = await requireTicketPermission({ ticket: ["assign"] });
 
   await assignTicket(db, { ticketId, organizationId, assigneeId, actorUserId: userId });
+
+  if (assigneeId) {
+    const [assignee, ticket] = await Promise.all([
+      getUserById(db, assigneeId),
+      getTicketDetail(db, ticketId),
+    ]);
+    if (assignee && ticket) {
+      await sendTicketAssignedEmail({
+        to: assignee.email,
+        ticketSubject: ticket.subject,
+        ticketUrl: `${env.BETTER_AUTH_URL}/tickets/${ticketId}`,
+      });
+    }
+  }
 
   publishTicketEvent(ticketId, { type: "assigned" });
   revalidatePath(`/tickets/${ticketId}`);

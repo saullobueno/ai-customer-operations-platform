@@ -1,3 +1,4 @@
+import { Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Comment = {
@@ -7,6 +8,7 @@ type Comment = {
   createdAt: Date;
   authorUser: { name: string } | null;
   authorCustomer: { name: string } | null;
+  attachments: { id: string; fileName: string; fileUrl: string }[];
 };
 
 export function CommentThread({ comments }: { comments: Comment[] }) {
@@ -38,6 +40,23 @@ export function CommentThread({ comments }: { comments: Comment[] }) {
               </time>
             </div>
             <p className="whitespace-pre-wrap">{comment.body}</p>
+            {comment.attachments.length > 0 && (
+              <ul className="mt-2 flex flex-col gap-1">
+                {comment.attachments.map((attachment) => (
+                  <li key={attachment.id}>
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    >
+                      <Paperclip className="size-3" />
+                      {attachment.fileName}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         );
       })}

@@ -61,6 +61,35 @@ describe("tickets service", () => {
     expect(logs.map((l) => l.action)).toContain("ticket.created");
   });
 
+  it("anexa um arquivo (por URL) a um comentário", async () => {
+    const { org, agent, cust } = await seed(db);
+    const created = await createTicket(db, {
+      organizationId: org.id,
+      customerId: cust.id,
+      subject: "Erro ao gerar relatório",
+      body: "O botão de exportar não funciona.",
+    });
+
+    await addComment(db, {
+      ticketId: created.id,
+      organizationId: org.id,
+      authorUserId: agent.id,
+      body: "Segue print do erro.",
+      attachmentUrl: "https://files.example.com/print.png",
+      attachmentFileName: "print.png",
+    });
+
+    const detail = await getTicketDetail(db, created.id);
+    const withAttachment = detail?.comments.find((c) => c.attachments.length > 0);
+
+    expect(withAttachment?.attachments).toEqual([
+      expect.objectContaining({
+        fileName: "print.png",
+        fileUrl: "https://files.example.com/print.png",
+      }),
+    ]);
+  });
+
   it("marca firstRespondedAt só na primeira resposta pública de agente, não em notas internas", async () => {
     const { org, agent, cust } = await seed(db);
     const created = await createTicket(db, {
