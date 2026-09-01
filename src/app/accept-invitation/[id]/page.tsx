@@ -4,6 +4,7 @@ import { auth } from "@/server/auth/config";
 import { getCurrentSession } from "@/server/auth/session";
 import { acceptInvitationAction, rejectInvitationAction } from "@/server/actions/members";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function AcceptInvitationPage({
@@ -34,6 +35,7 @@ export default async function AcceptInvitationPage({
   }
 
   if (wrongAccount) {
+    const nextUrl = `/accept-invitation/${id}`;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <Card className="w-full max-w-sm">
@@ -44,6 +46,11 @@ export default async function AcceptInvitationPage({
               {session.user.email}. Saia e entre com a conta que recebeu o convite.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <SignOutButton redirectTo={`/sign-in?next=${encodeURIComponent(nextUrl)}`}>
+              Sair e entrar com outra conta
+            </SignOutButton>
+          </CardContent>
         </Card>
       </div>
     );
