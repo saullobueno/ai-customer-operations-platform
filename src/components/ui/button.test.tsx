@@ -31,11 +31,11 @@ describe("Button", () => {
   it("renderiza como o elemento filho quando asChild", () => {
     render(
       <Button asChild>
-        <a href="/tickets">Ver tickets</a>
+        <a href="https://example.com/tickets">Ver tickets</a>
       </Button>,
     );
 
     const link = screen.getByRole("link", { name: "Ver tickets" });
-    expect(link).toHaveAttribute("href", "/tickets");
+    expect(link).toHaveAttribute("href", "https://example.com/tickets");
   });
 });

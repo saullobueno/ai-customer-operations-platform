@@ -17,6 +17,8 @@ export const statement = {
   ticket: ["create", "read", "update", "delete", "assign"],
 } as const;
 
+export type TicketPermissionAction = (typeof statement)["ticket"][number];
+
 export const ac = createAccessControl(statement);
 
 const owner = ac.newRole({

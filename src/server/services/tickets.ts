@@ -1,6 +1,8 @@
 import { and, desc, eq } from "drizzle-orm";
 import {
+  customer,
   notification,
+  organization,
   tag,
   ticket,
   ticketComment,
@@ -11,6 +13,30 @@ import {
 import { recordAuditLog } from "./audit";
 import { computeSlaDueAt } from "./sla";
 import type { AppDatabase } from "./types";
+
+export async function findOrganizationBySlug(db: AppDatabase, slug: string) {
+  const [org] = await db.select().from(organization).where(eq(organization.slug, slug));
+  return org ?? null;
+}
+
+export async function findOrCreateCustomer(
+  db: AppDatabase,
+  input: { organizationId: string; name: string; email: string },
+) {
+  const [existing] = await db
+    .select()
+    .from(customer)
+    .where(and(eq(customer.organizationId, input.organizationId), eq(customer.email, input.email)));
+
+  if (existing) return existing;
+
+  const [created] = await db
+    .insert(customer)
+    .values({ organizationId: input.organizationId, name: input.name, email: input.email })
+    .returning();
+
+  return created;
+}
 
 export async function createTicket(
   db: AppDatabase,

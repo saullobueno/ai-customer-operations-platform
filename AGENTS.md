@@ -68,7 +68,7 @@ com a suíte de qualidade verde:
 
 1. Scaffold e tooling (concluída)
 2. Fundação técnica — schema multi-tenant, RBAC, auth, design system (concluída)
-3. Fluxo vertical de tickets — inbox, comentários, SLA, realtime, audit log
+3. Fluxo vertical de tickets — inbox, comentários, SLA, realtime, audit log (concluída)
 4. Camada de IA — classificação, sumarização, RAG, agente
 5. Polimento — filas, billing, e-mail, analytics, CI completo
 
@@ -76,21 +76,26 @@ com a suíte de qualidade verde:
 
 ```
 src/app/                 # rotas (App Router) — composição de página, sem regra de negócio
-src/app/api/              # route handlers (ex.: catch-all do Better Auth)
+src/app/api/              # route handlers (catch-all do Better Auth, SSE de eventos de ticket)
 src/components/ui/        # design system: primitivos sem estado de negócio (Button, Input, Card…)
-src/components/(feature)/ # componentes de feature, compostos a partir de src/components/ui
+src/components/(feature)/ # componentes de feature (ex.: components/tickets), compostos a partir de components/ui
 src/server/db/schema/     # tabelas Drizzle. auth.ts é gerado (não editar à mão — ver abaixo)
 src/server/db/client.ts   # instância singleton do Drizzle (postgres-js)
 src/server/db/test-utils.ts  # createTestDb() com PGlite, para testes
-src/server/auth/          # config do Better Auth (config.ts) + RBAC (permissions.ts)
-src/lib/                  # utilitários puros sem I/O (cn(), env.ts)
+src/server/auth/          # config do Better Auth (config.ts), RBAC (permissions.ts), sessão/authorize
+src/server/services/      # lógica de negócio pura (recebe `db` por parâmetro — ver AppDatabase em types.ts)
+src/server/actions/       # Server Actions ("use server") — ponte fina entre forms e services, com checagem de RBAC
+src/server/realtime/      # publisher/subscriber de eventos em processo (ver ADR 0006)
+src/lib/                  # utilitários puros sem I/O (cn(), env.ts) + client do Better Auth (auth-client.ts)
 ```
 
-Regra de dependência: `app` pode importar de `components` e `server`;
-`components/ui` não importa de `server` nem de `components/(feature)`;
-`server` nunca importa de `app` ou `components`. Lógica de negócio (ex.:
-"criar ticket e disparar classificação") entra em `src/server/services/`
-quando a fase 3 começar — ainda não existe.
+Regra de dependência: `app` pode importar de `components`, `server/actions`
+e `server/auth/session`; `components/ui` não importa de `server` nem de
+`components/(feature)`; `server/services` nunca importa de `app`,
+`components` nem de `server/actions` (a lógica de negócio não sabe que
+existe uma UI ou uma Server Action chamando ela — é só `db` + tipos de
+domínio). `server/actions` é a única camada que faz RBAC
+(`requireTicketPermission`) e chama `revalidatePath`/`publishTicketEvent`.
 
 ### Schema de auth é gerado, não editado
 

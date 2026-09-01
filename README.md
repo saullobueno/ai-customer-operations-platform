@@ -71,8 +71,10 @@ commit com typecheck, lint, testes e build passando:
 1. **Scaffold e tooling** ✅ — Next.js, lint, formatter, testes, CI básico.
 2. **Fundação técnica** ✅ — schema multi-tenant (organization, user, team,
    member/RBAC via Better Auth), autenticação, design system base.
-3. **Fluxo vertical de tickets** — inbox, tickets, comentários, anexos,
-   SLA, tags, notas internas, atualizações em tempo real, audit log.
+3. **Fluxo vertical de tickets** ✅ — cliente abre chamado em `/report`,
+   equipe atende pela inbox (`/inbox` → `/tickets/[id]`): comentários
+   públicos e notas internas, atribuição, status, tags, SLA, atualização em
+   tempo real via SSE, notificações e audit log.
 4. **Camada de IA** — classificação de tickets, sumarização, sentimento,
    resposta sugerida, busca semântica (RAG), agente de IA.
 5. **Polimento** — filas assíncronas, billing, e-mail transacional,
