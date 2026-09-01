@@ -70,6 +70,36 @@ export async function inviteMemberAction(
   return { status: "idle" };
 }
 
+export async function resendInvitationAction(formData: FormData) {
+  const session = await getCurrentSession();
+  if (!session) redirect("/sign-in");
+
+  const organizationId = session.session.activeOrganizationId;
+  if (!organizationId) redirect("/onboarding");
+
+  const email = requiredString(formData, "email");
+  const roleRaw = requiredString(formData, "role");
+  const role = INVITE_ROLES.includes(roleRaw as (typeof INVITE_ROLES)[number])
+    ? (roleRaw as (typeof INVITE_ROLES)[number])
+    : "agent";
+
+  const invitation = await auth.api.createInvitation({
+    headers: await headers(),
+    body: { email, role, organizationId, resend: true },
+  });
+
+  const org = await findOrganizationById(db, organizationId);
+  if (org) {
+    await sendOrganizationInviteEmail({
+      to: email,
+      organizationName: org.name,
+      acceptUrl: `${env.BETTER_AUTH_URL}/accept-invitation/${invitation.id}`,
+    });
+  }
+
+  revalidatePath("/settings/members");
+}
+
 export async function cancelInvitationAction(formData: FormData) {
   const invitationId = requiredString(formData, "invitationId");
 

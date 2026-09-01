@@ -4,7 +4,7 @@ import { getCurrentSession } from "@/server/auth/session";
 import { auth } from "@/server/auth/config";
 import { db } from "@/server/db/client";
 import { listOrganizationMembers } from "@/server/services/members";
-import { cancelInvitationAction } from "@/server/actions/members";
+import { cancelInvitationAction, resendInvitationAction } from "@/server/actions/members";
 import { InviteMemberForm } from "@/components/organizations/invite-member-form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Badge } from "@/components/ui/badge";
@@ -74,15 +74,25 @@ export default async function MembersSettingsPage() {
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-medium">{invitation.email}</span>
                     <span className="text-xs text-muted-foreground">
-                      {ROLE_LABEL[invitation.role] ?? invitation.role}
+                      {ROLE_LABEL[invitation.role] ?? invitation.role} · expira em{" "}
+                      {new Date(invitation.expiresAt).toLocaleString("pt-BR")}
                     </span>
                   </div>
-                  <form action={cancelInvitationAction}>
-                    <input type="hidden" name="invitationId" value={invitation.id} />
-                    <SubmitButton variant="ghost" size="sm" pendingText="Cancelando…">
-                      Cancelar
-                    </SubmitButton>
-                  </form>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <form action={resendInvitationAction}>
+                      <input type="hidden" name="email" value={invitation.email} />
+                      <input type="hidden" name="role" value={invitation.role} />
+                      <SubmitButton variant="outline" size="sm" pendingText="Reenviando…">
+                        Reenviar
+                      </SubmitButton>
+                    </form>
+                    <form action={cancelInvitationAction}>
+                      <input type="hidden" name="invitationId" value={invitation.id} />
+                      <SubmitButton variant="ghost" size="sm" pendingText="Cancelando…">
+                        Cancelar
+                      </SubmitButton>
+                    </form>
+                  </div>
                 </Card>
               </li>
             ))}

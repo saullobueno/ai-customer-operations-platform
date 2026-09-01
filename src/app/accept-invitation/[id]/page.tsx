@@ -17,10 +17,36 @@ export default async function AcceptInvitationPage({
   if (!session) redirect(`/sign-in?next=${encodeURIComponent(`/accept-invitation/${id}`)}`);
 
   let invitation: Awaited<ReturnType<typeof auth.api.getInvitation>> | null = null;
+  let wrongAccount = false;
   try {
     invitation = await auth.api.getInvitation({ headers: await headers(), query: { id } });
-  } catch {
-    invitation = null;
+  } catch (error) {
+    /**
+     * O Better Auth já valida que o e-mail da sessão logada bate com o do
+     * convite dentro de `getInvitation` — se não bater, lança em vez de
+     * retornar os dados. Sem checar essa mensagem específica, esse caso
+     * (a causa mais comum de "convite não encontrado" na prática — a
+     * pessoa clica no link ainda logada com outra conta) ficava
+     * indistinguível de convite realmente expirado/cancelado.
+     */
+    const message = error instanceof Error ? error.message : "";
+    wrongAccount = message.includes("not the recipient");
+  }
+
+  if (wrongAccount) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>Conta diferente</CardTitle>
+            <CardDescription>
+              Este convite foi enviado para outro e-mail, mas você está logado como{" "}
+              {session.user.email}. Saia e entre com a conta que recebeu o convite.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   if (!invitation || invitation.status !== "pending") {
@@ -38,22 +64,6 @@ export default async function AcceptInvitationPage({
     );
   }
 
-  if (invitation.email !== session.user.email) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Conta diferente</CardTitle>
-            <CardDescription>
-              Este convite foi enviado para {invitation.email}, mas você está logado como{" "}
-              {session.user.email}. Entre com a conta correta para aceitar.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
@@ -61,7 +71,8 @@ export default async function AcceptInvitationPage({
           <CardTitle>Convite para {invitation.organizationName}</CardTitle>
           <CardDescription>
             {invitation.inviterEmail} te convidou para entrar em &quot;{invitation.organizationName}
-            &quot; como {invitation.role}.
+            &quot; como {invitation.role}. Expira em{" "}
+            {new Date(invitation.expiresAt).toLocaleString("pt-BR")}.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex gap-3">
