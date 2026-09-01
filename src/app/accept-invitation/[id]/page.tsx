@@ -1,11 +1,29 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/server/auth/config";
 import { getCurrentSession } from "@/server/auth/session";
+import { db } from "@/server/db/client";
+import { getInvitationById } from "@/server/services/members";
 import { acceptInvitationAction, rejectInvitationAction } from "@/server/actions/members";
+import { AcceptInvitationSignUpForm } from "@/components/organizations/accept-invitation-signup-form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+function unavailableCard() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Convite indisponível</CardTitle>
+          <CardDescription>
+            Esse convite não existe mais, já foi respondido, ou expirou.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
 
 export default async function AcceptInvitationPage({
   params,
@@ -15,7 +33,39 @@ export default async function AcceptInvitationPage({
   const { id } = await params;
 
   const session = await getCurrentSession();
-  if (!session) redirect(`/sign-in?next=${encodeURIComponent(`/accept-invitation/${id}`)}`);
+
+  if (!session) {
+    const pending = await getInvitationById(db, id);
+    if (!pending || pending.status !== "pending" || pending.expiresAt < new Date()) {
+      return unavailableCard();
+    }
+
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>Convite para {pending.organization.name}</CardTitle>
+            <CardDescription>
+              Crie sua conta para entrar em &quot;{pending.organization.name}&quot; como{" "}
+              {pending.role}. Expira em {pending.expiresAt.toLocaleString("pt-BR")}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <AcceptInvitationSignUpForm invitationId={id} email={pending.email} />
+            <p className="text-center text-sm text-muted-foreground">
+              Já tem conta?{" "}
+              <Link
+                href={`/sign-in?next=${encodeURIComponent(`/accept-invitation/${id}`)}`}
+                className="text-foreground underline underline-offset-4"
+              >
+                Entrar
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   let invitation: Awaited<ReturnType<typeof auth.api.getInvitation>> | null = null;
   let wrongAccount = false;
@@ -57,18 +107,7 @@ export default async function AcceptInvitationPage({
   }
 
   if (!invitation || invitation.status !== "pending") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Convite indisponível</CardTitle>
-            <CardDescription>
-              Esse convite não existe mais, já foi respondido, ou expirou.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+    return unavailableCard();
   }
 
   return (
