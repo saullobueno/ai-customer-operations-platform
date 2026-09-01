@@ -11,6 +11,39 @@ encaminha para a equipe certa — com tudo registrado em audit log.
 > de teste/simulado. Decisões de arquitetura estão documentadas como ADRs em
 > [`docs/decisions/`](docs/decisions/).
 
+## Veja funcionando
+
+🔗 **[Demo ao vivo](https://ai-customer-operations-platform-gamma.vercel.app)**
+— crie uma conta e explore, ou siga o roteiro abaixo.
+
+### Roteiro de 3 minutos
+
+1. **Crie uma conta e uma organização** — vai direto pro inbox.
+2. **Copie o link "Novo ticket"** do inbox e abra numa aba anônima — é o
+   formulário que o _cliente_ usaria, sem login.
+3. **Abra o ticket criado** e clique em **"Analisar com IA"** —
+   classificação, sentimento, prioridade sugerida e resposta gerada em
+   tempo real via GroqCloud.
+4. **Convide alguém** em Membros e veja o e-mail de convite chegar de
+   verdade (Resend).
+5. Com o e-mail do cliente que abriu o ticket, acompanhe o chamado em
+   `/report/track` — sem precisar de conta.
+
+### O que isso mostra
+
+- **Arquitetura multi-tenant real**, não simulada: RBAC por organização,
+  isolamento de dados, convites com validação de e-mail/expiração.
+- **IA como parte do fluxo**, não um chatbot decorativo — classificação,
+  RAG (busca em base de conhecimento) e sugestão de resposta rodando de
+  verdade contra a GroqCloud.
+- **Decisões de arquitetura documentadas**, não só código:
+  [`docs/decisions/`](docs/decisions/) tem os ADRs registrando _por que_
+  cada escolha foi feita — inclusive os becos sem saída (ex.:
+  [três formas de rodar sem Docker testadas antes de decidir por Postgres
+  nativo](docs/decisions/0012-pglite-for-local-dev.md)).
+- **Testes de verdade**: Vitest cobrindo regras de negócio, RBAC e
+  integração de fila, rodando em CI a cada push.
+
 ## Stack
 
 | Camada      | Tecnologia                                        |
@@ -133,13 +166,13 @@ commit com typecheck, lint, testes e build passando:
 
 ## O que está validado contra serviços reais vs. mockado
 
-| Integração          | Status                                                                             |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| GroqCloud (IA)      | ✅ Validado com chamada real à API (ver ADR 0007)                                  |
-| Fila BullMQ + Redis | ✅ Validado no CI contra um serviço Redis real (`redis-integration.test.ts`)       |
-| Postgres + Drizzle  | ✅ Validado via PGlite (Postgres real) em todos os testes de integração            |
-| Stripe (billing)    | 🟡 Implementado, não validado contra API real — modo mock sem chave (ver ADR 0011) |
-| Resend (e-mail)     | 🟡 Implementado, não validado contra API real — modo mock sem chave                |
+| Integração          | Status                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| GroqCloud (IA)      | ✅ Validado com chamada real à API (ver ADR 0007)                                       |
+| Fila BullMQ + Redis | ✅ Validado no CI contra um serviço Redis real (`redis-integration.test.ts`)            |
+| Postgres + Drizzle  | ✅ Validado via PGlite (Postgres real) em todos os testes de integração                 |
+| Stripe (billing)    | 🟡 Implementado, não validado contra API real — modo mock sem chave (ver ADR 0011)      |
+| Resend (e-mail)     | ✅ Validado em produção — confirmação de ticket, resposta e convite chegando de verdade |
 
 ## Documentação para agentes
 

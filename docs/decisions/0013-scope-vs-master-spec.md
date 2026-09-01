@@ -91,5 +91,8 @@ esquecimento, é corte deliberado por tamanho:
   acima, cada um é grande o suficiente para merecer sua própria decisão de
   escopo (e provavelmente seu próprio ADR) antes de começar — não são
   "só mais uma tela".
-- `docs/project/` fica no repositório como referência da visão completa;
-  não deve ser tratado como backlog imediato.
+- `docs/project/` foi removido do repositório (decisão do usuário, depois
+  desta sessão): o documento mestre não vai ser implementado aqui — fica
+  para um projeto separado no futuro. Este ADR continua valendo como
+  registro de que a visão completa existiu e de quais partes dela foram
+  trazidas para este projeto.
